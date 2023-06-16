@@ -1,112 +1,240 @@
-install.packages("BiocManager")
-install.packages("metafor")
-install.packages("esc")
-install.packages("esvis")
+
+##Script to meta-analysis for different parameters
+####MetS vs Non MetS##################################
+getwd()
+setwd("D:/Systematic_Review_paper1/CSV_results")
+
+#################################################################################################################
 library(BiocManager)
 library(metafor)
 library(esc)
 library(esvis)
+library(plyr)
+library(dplyr)
+library(gridExtra)
+library(ggplot2)
+library(esc)
+library(tidyverse)
+data<-read.csv("D:/Systematic_Review_paper1/MetS_vs_no_MetS.csv")
 
-##########################################################################################################
+#################################################################################################################
+##data for duration of diabetes
 
-data<-read.csv("D:/Systematic_Review_paper1/Gender_heterogenity.csv")## MASTER DATA
+df_metS<-data[, c(1,4:9),] # dataframe for diabetes duration
+hedges_g<-esc_mean_sd(grp1m = df_metS$metS_duration_mean, grp1sd = df_metS$mets_duration_sd, grp1n = df_metS$Met_Sample_Size,
+                      grp2m = df_metS$NS_duration_mean, grp2sd = df_metS$NS_duration_sd, grp2n = df_metS$No_Met_Sample_Size, 
+                      es.type = "g", study = df_metS$Author)
 
-df_BMI<-data[-c(5:14), ] # dataframe for BMI
-df_HbA1C<- data[-c(1:5, 10:14), ] #dataframe for HbA1C
-df_insulinUnits_kg_day<- data[-c(1:10), ] #dataframe for insulin
+#object to subject for forest plot
+res<- rma(yi = hedges_g$es,     # The d-column of the df, which contains Cohen's d
+              vi = hedges_g$var) 
 
-df_smd<-escalc(measure = "SMD" , m1i=mean,
-               m2i = mean.1,
-               sd1i = sd,
-               sd2i = sd.1,
-               n1i = sample.size,
-               n2i = sample.size.1,
-               data = data)
-hg<-hedges_g(df_smd$yi, df_smd$Total.sample) #converts cohens to hedges
-df_smd$hedges_g<- with(df_smd,hg) #bind the result of hg to data frame of cohens d. 
-
-#calculating standard mean difference for BMI
-df_smd_BMI<-escalc(measure = "SMD", 
-               m1i = mean,
-               m2i = mean.1,
-               sd1i = sd,
-               sd2i = sd.1,
-               n1i = sample.size,
-               n2i = sample.size.1,
-               data = df_BMI)
-hg<-hedges_g(df_smd_BMI$yi, df_smd_BMI$Total.sample) #converts cohens to hedges
-df_smd_BMI$hedges_g<- with(df_smd_BMI,hg) #bind the result of hg to data frame of cohens d. 
-
-#calculating standard mean difference for HbA1C
-df_smd_HbA1C<-escalc(measure = "SMD", m1i = mean,
-               m2i = mean.1,
-               sd1i = sd,
-               sd2i = sd.1,
-               n1i = sample.size,
-               n2i = sample.size.1,
-               data = df_HbA1C)
-hg<-hedges_g(df_smd_HbA1C$yi, df_smd_HbA1C$Total.sample) #converts cohens to hedges
-df_smd_HbA1C$hedges_g<- with(df_smd_HbA1C,hg) #bind the result of hg to data frame of cohens d. 
-
-#calculating standard mean difference for insulin units
-df_smd_insulin<-escalc(measure = "SMD", m1i = mean,
-               m2i = mean.1,
-               sd1i = sd,
-               sd2i = sd.1,
-               n1i = sample.size,
-               n2i = sample.size.1,
-               data = df_insulinUnits_kg_day)
-hg<-hedges_g(df_smd_insulin$yi, df_smd_insulin$Total.sample) #converts cohens to hedges
-df_smd_insulin$hedges_g<- with(df_smd_insulin,hg) #bind the result of hg to data frame of cohens d. 
-
-####################################################################################################
-
-#below code for randomised model###################################################################
-m_re_df_smd <- rma(yi = df_smd$hedges_g,     # The d-column of the df, which contains Cohen's d
-                vi = df_smd$vi)           # The vi-column of the df, which contains the variances
-m_re_df_smd
+#forest plot
+forest.rma(res, xlim=c(-6,5), cex=1.5, header="Author(s) and Year",
+       slab = hedges_g$study, xlab = "Hedge's g", showweights = TRUE)  #randomised forest plot
 
 
-m_re_BMI <- rma(yi = df_smd_BMI,     # The d-column of the df, which contains Cohen's d
-         vi = df_smd_BMI$vi)           # The vi-column of the df, which contains the variances
-m_re_BMI
+### add text for stats for heterogeneity
+text(-6,-1, pos=4, cex=1.5, bquote(paste("RE Model(Q = ",
+                                         .(formatC(res$QE, digits=2, format="f")),", df = ",.(res$k - res$p),
+                                         ", p = ", .(formatC(res$QEp, digits=2, format="f")), "; ", I^2, " = ",
+                                         .(formatC(res$I2, digits=1, format="f")), "%)")))
 
-m_re_HbA1C <- rma(yi = df_smd_HbA1C$yi,     # The d-column of the df, which contains Cohen's d
-            vi = df_smd_HbA1C$vi)    # The vi-column of the df, which contains the variances
-m_re_HbA1C
+### add text for test of overall effect
+text(-6, -1.5, pos=4, cex=1.5, bquote(paste("Test for overall effect: Z=",
+                                          .(formatC(res$zval, digits=2, format="f")),
+                                          ", P", .(ifelse(res$pval<.001, "<0.001",
+                                                          paste0("=",formatC(res$pval, digits=2, format="f")))))))
 
-m_re_insulin <- rma(yi = df_smd_insulin$yi,     # The d-column of the df, which contains Cohen's d
-            vi = df_smd_insulin$vi)    # The vi-column of the df, which contains the variances
-m_re_insulin
+funnel(res, main="duration of diabetes")
+##results I2 = 0%, pval=0.3592
+##se=0.164  , pval=0.20
 
-####################################################################################################
+#################################################################################################################
+##data insulin units # homogenous data so no removal of studies
+df_INS_units<-data[, c(1,4,5,10:13), ] # dataframe for BMI
+hedges_g<-esc_mean_sd(grp1m = df_INS_units$MetS_insulin_mean, grp1sd = df_INS_units$MetS_insulin_sd, grp1n = df_INS_units$Met_Sample_Size ,
+                      grp2m = df_INS_units$NS_insulin_mean, grp2sd = df_INS_units$NS_insulin_sd, grp2n = df_INS_units$No_Met_Sample_Size, 
+                      es.type = "g", study = df_INS_units$Author)
 
-#creating a forest plot
-#forest(m, slab=df_smd$study)# fixed effect forest plot
-forest(m_re_df_smd, slab = df_smd$study..BMI.) #randomised forest plot
-forest(m_re_BMI, slab = df_smd_BMI$study..BMI., addcred = TRUE)
-pdf(file='forestplot_BMI.pdf') # Open PDF device with specific file name
-forest(m_re_BMI, slab = df_smd_BMI$study)# Plot the forest
-dev.off()
+res<- rma(yi = hedges_g$es,     # The d-column of the df, which contains Cohen's d
+          vi = hedges_g$var) 
 
-forest(m_re_HbA1C, slab = df_smd_HbA1C$study) #randomised forest plot
-forest(m_re_HbA1C, slab = df_smd_HbA1C$study, addcred = TRUE)
-pdf(file='forestplot_HbA1C.pdf')
-forest(m_re_HbA1C, slab = df_smd_HbA1C$study)
-dev.off()
+#Forest plot
+forest(res, xlim=c(-6,5), cex=1.5, header="Author(s) and Year",
+       slab = hedges_g$study, xlab = "Hedge's g", showweights = TRUE) #randomised forest plot
 
-forest(m_re_insulin, slab = df_smd_insulin$study) #randomised forest plot
-forest(m_re_insulin, slab = df_smd_insulin$study, addcred = TRUE)
-pdf(file='forestplot_insulin.pdf')
-forest(m_re_insulin, slab = df_smd_insulin$study)
-##saving th forest plot as pdf#######################################################################
+### add text for stats for heterogeneity
+text(-6,-1, pos=4, cex=1.5, bquote(paste("RE Model(Q = ",
+                                       .(formatC(res$QE, digits=2, format="f")),", df = ",.(res$k - res$p),
+                                       ", p = ", .(formatC(res$QEp, digits=2, format="f")), "; ", I^2, " = ",
+                                       .(formatC(res$I2, digits=1, format="f")), "%)")))
 
-dev.off() # Turn the PDF device off
+### add text for test of overall effect
+text(-6, -1.5, pos=4, cex=1.5, bquote(paste("Test for overall effect: Z=",
+                                            .(formatC(res$zval, digits=2, format="f")),
+                                            ", P", .(ifelse(res$pval<.001, "<0.001",
+                                                            paste0("=",formatC(res$pval, digits=2, format="f")))))))
+
+funnel(res, main="Units of insulin")
+##results I2=0%, pval=0.15
+
+##################################################################################################################
+##data for HbA1C 
+df_HbA1C<- data[, c(1,4,5,14:17), ]
+#df_HbA1C<-df_HbA1C[-c(4), ]#to remove one study that shows max heterogeneity
+hedges_g<-esc_mean_sd(grp1m = df_HbA1C$metS_HbA1c_mean, grp1sd = df_HbA1C$metS_HbA1c_sd, grp1n = df_HbA1C$Met_Sample_Size ,
+                      grp2m = df_HbA1C$NS_HbA1c_mean, grp2sd = df_HbA1C$NS_HbA1c_sd, grp2n = df_HbA1C$No_Met_Sample_Size, 
+                      es.type = "g", study = df_HbA1C$Author)
+
+res<- rma(yi = hedges_g$es, # The d-column of the df, which contains Cohen's d
+          vi = hedges_g$var) 
+#forest plot
+forest(res, xlim=c(-6,5), cex=1.5, header="Author(s) and Year",
+       slab = hedges_g$study, xlab = "Hedge's g", showweights = TRUE) #randomised forest plot
+
+## add text for heterogeneity significance
+text(-6,-1, pos=4, cex=1.5, bquote(paste("RE Model(Q = ",
+                                       .(formatC(res$QE, digits=2, format="f")),", df = ",.(res$k - res$p),
+                                       ", p = ", .(formatC(res$QEp, digits=3, format="f")), "; ", I^2, " = ",
+                                       .(formatC(res$I2, digits=1, format="f")), "%)")))
+### add text for test of overall effect
+text(-6, -1.5, pos=4, cex=1.5, bquote(paste("Test for overall effect: Z=",
+                                            .(formatC(res$zval, digits=2, format="f")),
+                                            ", P", .(ifelse(res$pval<.001, "<0.001",
+                                                            paste0("=",formatC(res$pval, digits=2, format="f")))))))
+funnel(res, main="HbA1C")
+##Results  I2=94.3%, pval=0.12
+##outlier is the Study from monika grabria may be because we coonverted median and IQR to mean and sd
+
+###################################################################################################################
+##data for waist circumference
+df_WC<- data[, c(1,4,5,18:21), ]
+df_WC<- df_WC[-c(2), ]#to remove one study that shows max heterogeneity
+#df_WC<- df_WC[-c(4), ]
+
+hedges_g<-esc_mean_sd(grp1m = df_WC$metS_WC_mean, grp1sd = df_WC$metS_WC_sd, grp1n = df_WC$Met_Sample_Size ,
+                      grp2m = df_WC$NS_WC_mean, grp2sd = df_WC$NS_WC_sd, grp2n = df_WC$No_Met_Sample_Size, 
+                      es.type = "g", study = df_WC$Author)
+res<- rma(yi = hedges_g$es,     # The d-column of the df, which contains Cohen's d
+              vi = hedges_g$var) 
+#Forest plot
+forest(res, xlim=c(-6,6), cex=1.5, header="Author(s) and Year",
+       slab = hedges_g$study, xlab = "Hedge's g", showweights = TRUE) #randomised forest plot
+
+text(-6,-1, pos=4, cex=1.5, bquote(paste("RE Model(Q = ",
+                                       .(formatC(res$QE, digits=2, format="f")),", df = ",.(res$k - res$p),
+                                       ", p = ", .(formatC(res$QEp, digits=2, format="f")), "; ", I^2, " = ",
+                                       .(formatC(res$I2, digits=1, format="f")), "%)")))
+### add text for test of overall effect
+text(-6, -1.5, pos=4, cex=1.5, bquote(paste("Test for overall effect: Z=",
+                                            .(formatC(res$zval, digits=2, format="f")),
+                                            ", P", .(ifelse(res$pval<.001, "<0.001",
+                                                            paste0("=",formatC(res$pval, digits=2, format="f")))))))
+funnel(res, main="Waist circunference")
+baujat(res)
+##Result I2=82.6%, pval=0.00
+## heterogeneity reduced by removing soliman 2019 ## I2 = 0.0%, pval=0.000000
+
+###################################################################################################################
+##data for TG
+df_TG<- data[, c(1,4,5,22:25), ]
+df_TG<- df_TG[-c(4), ]#to remove one study that shows max heterogeneity
+hedges_g<-esc_mean_sd(grp1m = df_TG$metS_TG_mean, grp1sd = df_TG$metS_TG_sd, grp1n = df_TG$Met_Sample_Size,
+                      grp2m = df_TG$NS_TG_mean, grp2sd = df_TG$NS_TG_sd, grp2n = df_TG$No_Met_Sample_Size, 
+                      es.type = "g", study = df_TG$Author)
+res<- rma(yi = hedges_g$es,     # The d-column of the df, which contains Cohen's d
+         vi = hedges_g$var) 
+#Forest plot
+forest(res, xlim=c(-6,6), cex=1.5, header="Author(s) and Year",
+       slab = hedges_g$study, xlab = "Hedge's g", showweights = TRUE) #randomised forest plot
+#text for heterogeneity
+text(-6,-1, pos=4, cex=1.5, bquote(paste("RE Model(Q = ",
+                                       .(formatC(res$QE, digits=2, format="f")),", df = ",.(res$k - res$p),
+                                       ", p = ", .(formatC(res$QEp, digits=2, format="f")), "; ", I^2, " = ",
+                                       .(formatC(res$I2, digits=1, format="f")), "%)")))
+### add text for test of overall effect
+text(-6, -1.5, pos=4, cex=1.5, bquote(paste("Test for overall effect: Z=",
+                                            .(formatC(res$zval, digits=2, format="f")),
+                                            ", P", .(ifelse(res$pval<.001, "<0.001",
+                                                            paste0("=",formatC(res$pval, digits=2, format="f")))))))
+
+funnel(res, main="Triglyceride")
+##Result I2= 83.5%, pval=2.63
+## heterogenirty removed by excluding monika gabria study
+
+###################################################################################################################
+##data for HDL
+df_HDL<- data[, c(1,4,5,26:29), ]#homogenous data so no removal of datasets
+hedges_g<-esc_mean_sd(grp1m = df_HDL$metS_HDL_mean, grp1sd = df_HDL$metS_HDL_sd, grp1n = df_HDL$Met_Sample_Size,
+                      grp2m = df_HDL$NS_HDL_mean, grp2sd = df_HDL$NS_HDL_sd, grp2n = df_HDL$No_Met_Sample_Size, 
+                      es.type = "g", study = df_HDL$Author)
+res<- rma(yi = hedges_g$es,     # The d-column of the df, which contains Cohen's d
+            vi = hedges_g$var) 
+#Forest Plot
+forest(res, xlim=c(-6,4), cex=1.5, header="Author(s) and Year",
+       slab = hedges_g$study, xlab = "Hedge's g", showweights = TRUE) #randomised forest plot
+#text for heterogeneity significance
+text(-6,-1, pos=4, cex=1.5, bquote(paste("RE Model(Q = ",
+                                       .(formatC(res$QE, digits=2, format="f")),", df = ",.(res$k - res$p),
+                                       ", p = ", .(formatC(res$QEp, digits=2, format="f")), "; ", I^2, " = ",
+                                       .(formatC(res$I2, digits=1, format="f")), "%)")))
+### add text for test of overall effect
+text(-6, -1.5, pos=4, cex=1.5, bquote(paste("Test for overall effect: Z=",
+                                            .(formatC(res$zval, digits=2, format="f")),
+                                            ", P", .(ifelse(res$pval<.001, "<0.001",
+                                                            paste0("=",formatC(res$pval, digits=2, format="f")))))))
+funnel(res, main="HDL")
+##Result I2=0%, pval= 0.01
+
+###################################################################################################################
+##data for LDL
+df_LDL<- data[, c(1,4,5,30:33), ]#to remove one study that shows max heterogeneity
+df_LDL<-df_LDL[-c(4), ]
+hedges_g<-esc_mean_sd(grp1m = df_LDL$metS_LDL_mean, grp1sd = df_LDL$metS_LDL_sd, grp1n = df_LDL$Met_Sample_Size,
+                      grp2m = df_LDL$NS_LDL_mean, grp2sd = df_LDL$NS_LDL_sd, grp2n = df_LDL$No_Met_Sample_Size, 
+                      es.type = "g", study = df_LDL$Author)
+res<- rma(yi = hedges_g$es,     # The d-column of the df, which contains Cohen's d
+                     vi = hedges_g$var) 
+
+#Forest Plot
+forest(res, xlim=c(-6,5), cex=1.5, header="Author(s) and Year",
+       slab = hedges_g$study, xlab = "Hedge's g", showweights = TRUE) #randomised forest plot
+#Text for heterogeneity
+text(-6,-1, pos=4, cex=1.5, bquote(paste("RE Model(Q = ",
+                                       .(formatC(res$QE, digits=2, format="f")),", df = ",.(res$k - res$p),
+                                       ", p = ", .(formatC(res$QEp, digits=2, format="f")), "; ", I^2, " = ",
+                                       .(formatC(res$I2, digits=1, format="f")), "%)")))
+### add text for test of overall effect
+text(-6, -1.5, pos=4, cex=1.5, bquote(paste("Test for overall effect: Z=",
+                                            .(formatC(res$zval, digits=2, format="f")),
+                                            ", P", .(ifelse(res$pval<.001, "<0.001",
+                                                            paste0("=",formatC(res$pval, digits=2, format="f")))))))
+funnel(res, main="LDL")
+
+##Result I2=76.7%%, pval=0.01
+# removal of monika gabria reduced heterogeneity to I2=23.4%, p=0.01
+##################################################################################################################
+##bias assesment by funnel plot
+### set up 2x2 array for plotting
+par(mfrow=c(2,2))
+
+funnel(df_duration, main="Duration of diabetes")
+funnel(df_INS, main="Units of insulin")
+funnel(df_Hb, main="HbA1C")
+funnel(waist_c, main="Waist circumference")
+funnel(TG, main="TG")
+funnel(HDL, main="HDL")
+funnel(LDL, main="LDL")
 
 
-#Below code for fixed effect model
-#m <- rma(yi = df_smd$yi,     # The d-column of the df, which contains Cohen's d
-#         vi = df_smd$vi,    # The vi-column of the df, which contains the variances
-#         method = "FE") # Run a fixed-effect model
-#m
-#m$I2
+
+######################################################################################################################
+### draw funnel plots with other parameters
+funnel(res, main="Standard Error")
+funnel(res, yaxis="vi", main="Sampling Variance")
+funnel(res, yaxis="seinv", main="Inverse Standard Error")
+funnel(res, yaxis="vinv", main="Inverse Sampling Variance")
+
+#####################################################################################################################
+
