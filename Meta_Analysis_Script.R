@@ -215,26 +215,4 @@ funnel(res, main="LDL")
 ##Result I2=76.7%%, pval=0.01
 # removal of monika gabria reduced heterogeneity to I2=23.4%, p=0.01
 ##################################################################################################################
-##bias assesment by funnel plot
-### set up 2x2 array for plotting
-par(mfrow=c(2,2))
-
-funnel(df_duration, main="Duration of diabetes")
-funnel(df_INS, main="Units of insulin")
-funnel(df_Hb, main="HbA1C")
-funnel(waist_c, main="Waist circumference")
-funnel(TG, main="TG")
-funnel(HDL, main="HDL")
-funnel(LDL, main="LDL")
-
-
-
-######################################################################################################################
-### draw funnel plots with other parameters
-funnel(res, main="Standard Error")
-funnel(res, yaxis="vi", main="Sampling Variance")
-funnel(res, yaxis="seinv", main="Inverse Standard Error")
-funnel(res, yaxis="vinv", main="Inverse Sampling Variance")
-
-#####################################################################################################################
 
