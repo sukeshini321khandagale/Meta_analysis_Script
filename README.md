@@ -1,6 +1,15 @@
-# Meta_analysis_Script
-Codes relevant to meta-analysis are provided in "Meta_analysis_Script".  
-The data is extracted using publicly available literature. This extracted data is provided in csv file named "MetS_vs_no_MetS.csv". 
 
+**#Project Description:**
+The project deals with investigation of indirect markers for metabolic syndrome in children with Type 1 diabetes (T1DM). These components of metabolic syndrome may fluctuate in case of children who are on exogenous insulin therapy. It is therefore important to investigate the stability of these components which will be used to assess metabolic syndrome. To assess the strength of association we perform a meta-analysis of observational studies with cohort of children with T1DM. 
+
+**#Steps to analysis:** 
+1.	Prior to running the script, you need to install all the packages listed in the script. This might take a few minutes. Recall the library for the packages.
+2.	You can load the script in R studio and download the CSV for data provided in your repository for the project keeping a track of the filepath. 
+3.	A csv file (**MetS_vs_NoMetS.csv**) containing the mean, SD and sample size of the cohort divided into patients with and without metabolic syndrome. The same file is then subjected to the script titled (**Meta_Analysis_Script.R**). 
+4.	Some of the parameters such as duration of diabetes, insulin units, HbA1c, Waist circumference, lipid profile is analysed separately by selecting specific columns for analysis. During each parameter, specific column is selected to become a dataframe and then subjected to calculate the standard mean difference. 
+5.	These columns are subjected to the command “esc_mean_sd” which calculates the standard mean difference. 
+6.	The difference is then visualized using “forest()” command to plot forest plot. 
+7.	Precision and homogeneity are tested using “funnel()” command which looks for symmetry of datasets in a triangle. 
+8.	The process is repeated after the removal of datasets to see the difference in the cumulative standard mean difference. 
 
 
