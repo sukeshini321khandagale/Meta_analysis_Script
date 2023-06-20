@@ -12,6 +12,6 @@ The project deals with an investigation of indirect markers for metabolic syndro
 7.	Precision and homogeneity are tested using the “funnel()” command which looks for the symmetry of datasets in a triangle. 
 8.	The process is repeated after the removal of datasets to see the difference in the cumulative standard mean difference.
 
-**Note** To select a specific column for each command use the "$" sign after the dataframe name. 
+**Note** To select a specific column for each command use the "$" sign after the data frame name. 
 
 
