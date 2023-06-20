@@ -20,6 +20,11 @@ Email id: sukeshini[dot]Khandagale[at]ssbs.edu.in
 Symbiosis School of Biological Sciences (SSBS)
 Symbiosis International University, Lavale, Pune 411015
 
+Vinesh Kamble (SIU JRF)
+Email id: vinesh[dot]kamble[at]ssbs.edu.in
+Symbiosis School of Biological Sciences (SSBS)
+Symbiosis International University, Lavale, Pune 411015
+
 Dr. Satyajeet Khare (Assistant Professor)
 Email id: Satyajeet[dot]khare[at]ssbs.edu.in
 Symbiosis School of Biological Sciences (SSBS)
