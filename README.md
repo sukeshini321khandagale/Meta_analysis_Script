@@ -15,6 +15,7 @@ The project deals with an investigation of indirect markers for metabolic syndro
 For more details on the project please refer to the medRxiv link given doi: https://doi.org/10.1101/2023.05.23.23290372
 
 **#Contributors to the project** 
+
 Sukeshini Khandagale (SIU JRF) 
 Email id: sukeshini[dot]Khandagale[@]ssbs.edu.in
 Symbiosis School of Biological Sciences (SSBS)
