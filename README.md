@@ -12,7 +12,7 @@ The project deals with an investigation of indirect markers for metabolic syndro
 8.	The process is repeated after the removal of datasets to see the difference in the cumulative standard mean difference.
 
 **Note** To select a specific column for each command use the "$" sign after the data frame name.
-For more details on the project please refer to the medRxiv link given below doi: https://doi.org/10.1101/2023.05.23.23290372
+For more details on the project please refer to the medRxiv link given doi: https://doi.org/10.1101/2023.05.23.23290372
 
 **#Contributors to the project** 
 Sukeshini Khandagale (SIU JRF) 
